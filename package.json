@@ -4,14 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node scripts/dev.js",
+    "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "start": "node server/index.js"
+    "start": "vite preview --host 0.0.0.0"
   },
   "dependencies": {
-    "dotenv": "^17.0.0",
-    "express": "^5.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "lucide-react": "^0.468.0"

@@ -1,101 +1,130 @@
-import { useEffect, useRef, useState } from "react";
-import { Heart, Moon, Send, Sun, Trash2 } from "lucide-react";
-import { BOT_META, WELCOME_TEXT, makeBotReply } from "./persona.js";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Heart, Send, Sparkles, Trash2 } from "lucide-react";
+import {
+  BOT_META,
+  WELCOME_TEXT,
+  makeBotReply,
+  makeThinkingLine,
+} from "./persona.js";
 
-const STORAGE_KEY = "positive-boyfriend-chat";
-
-const INITIAL_MESSAGES = [
-  {
-    id: crypto.randomUUID(),
-    role: "bot",
-    text: WELCOME_TEXT,
-    meta: BOT_META,
-  },
+const STORAGE_KEY = "positive-boyfriend-chat-v4";
+const LEGACY_MESSAGE_HINTS = [
+  ["비슷한", "솜사탕"],
+  ["주제", "빙글빙글"],
+  ["꺼낸", "리본"],
 ];
 
-async function requestAiReply(conversation) {
-  const response = await fetch("/api/chat", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      messages: conversation.map(({ role, text }) => ({ role, text })),
-    }),
+function createBotMessage(text) {
+  return {
+    id: crypto.randomUUID(),
+    role: "bot",
+    text,
+    meta: BOT_META,
+  };
+}
+
+function createUserMessage(text) {
+  return {
+    id: crypto.randomUUID(),
+    role: "user",
+    text,
+    meta: "자기",
+  };
+}
+
+function isLegacyBotMessage(message) {
+  return (
+    message?.role === "bot" &&
+    LEGACY_MESSAGE_HINTS.some((hints) =>
+      hints.every((hint) => message.text?.includes(hint))
+    )
+  );
+}
+
+function sanitizeMessages(messages) {
+  const sanitized = Array.isArray(messages)
+    ? messages.filter((message) => !isLegacyBotMessage(message))
+    : [];
+
+  return sanitized.length > 0 ? sanitized : [createBotMessage(WELCOME_TEXT)];
+}
+
+function loadMessages() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    const parsed = saved ? JSON.parse(saved) : null;
+
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return sanitizeMessages(parsed);
+    }
+  } catch {
+    localStorage.removeItem(STORAGE_KEY);
+  }
+
+  return [createBotMessage(WELCOME_TEXT)];
+}
+
+function waitForFakeInference(text) {
+  const base = Math.min(1150, Math.max(520, text.length * 18));
+  const jitter = Math.floor(Math.random() * 420);
+
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, base + jitter);
   });
-
-  if (!response.ok) {
-    throw new Error(`Chat request failed: ${response.status}`);
-  }
-
-  const data = await response.json();
-  if (!data?.text) {
-    throw new Error("Chat response did not include text");
-  }
-
-  return data.text;
 }
 
 function App() {
-  const [messages, setMessages] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : INITIAL_MESSAGES;
-  });
+  const [messages, setMessages] = useState(loadMessages);
   const [input, setInput] = useState("");
-  const [theme, setTheme] = useState("light");
   const [isThinking, setIsThinking] = useState(false);
+  const [thinkingLine, setThinkingLine] = useState(makeThinkingLine);
   const endRef = useRef(null);
 
+  const canSend = input.trim().length > 0 && !isThinking;
+  const visibleMessages = useMemo(() => sanitizeMessages(messages), [messages]);
+
+  const recentUserCount = useMemo(
+    () => visibleMessages.filter((message) => message.role === "user").length,
+    [visibleMessages]
+  );
+
   useEffect(() => {
+    if (messages.length === 0 || messages.some(isLegacyBotMessage)) {
+      setMessages(sanitizeMessages(messages));
+      return;
+    }
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
   }, [messages]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isThinking]);
+  }, [visibleMessages, isThinking, thinkingLine]);
 
   async function sendMessage(text = input) {
     const trimmed = text.trim();
     if (!trimmed || isThinking) return;
 
-    const userMessage = {
-      id: crypto.randomUUID(),
-      role: "user",
-      text: trimmed,
-      meta: "나",
-    };
+    const userMessage = createUserMessage(trimmed);
+    const nextMessages = [...visibleMessages, userMessage];
 
-    const nextMessages = [...messages, userMessage];
     setMessages(nextMessages);
     setInput("");
+    setThinkingLine(makeThinkingLine());
     setIsThinking(true);
 
-    try {
-      const replyText = await requestAiReply(nextMessages.slice(-14));
-      const reply = {
-        id: crypto.randomUUID(),
-        role: "bot",
-        text: replyText,
-        meta: BOT_META,
-      };
-      setMessages((current) => [...current, reply]);
-    } catch (error) {
-      console.warn(error);
-      const fallbackReply = {
-        id: crypto.randomUUID(),
-        role: "bot",
-        text: makeBotReply(trimmed),
-        meta: BOT_META,
-      };
-      setMessages((current) => [...current, fallbackReply]);
-    } finally {
-      setIsThinking(false);
-    }
+    await waitForFakeInference(trimmed);
+
+    const reply = createBotMessage(makeBotReply(trimmed, nextMessages));
+    setMessages((current) => [...current, reply]);
+    setIsThinking(false);
   }
 
   function resetChat() {
-    setMessages(INITIAL_MESSAGES);
+    setMessages([createBotMessage(WELCOME_TEXT)]);
     setInput("");
+    setIsThinking(false);
+    setThinkingLine(makeThinkingLine());
   }
 
   function handleSubmit(event) {
@@ -104,27 +133,23 @@ function App() {
   }
 
   return (
-    <main className={`app-shell ${theme}`}>
-      <section className="chat-panel" aria-label="대화">
+    <main className="app-shell">
+      <section className="chat-panel" aria-label="자기만의왕자님 채팅">
         <header className="chat-header">
-          <div>
+          <div className="bot-title">
             <span className="status-dot" />
-            <p>{BOT_META}</p>
+            <div>
+              <p>{BOT_META}</p>
+              <small>대화 {recentUserCount}회째에도 아직 상처 못 받음</small>
+            </div>
           </div>
           <div className="header-actions">
             <button
               type="button"
               className="icon-button"
-              onClick={() => setTheme(theme === "light" ? "night" : "light")}
-              title={theme === "light" ? "밤 모드" : "낮 모드"}
-            >
-              {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
-            </button>
-            <button
-              type="button"
-              className="icon-button"
               onClick={resetChat}
               title="대화 초기화"
+              aria-label="대화 초기화"
             >
               <Trash2 size={18} />
             </button>
@@ -132,13 +157,10 @@ function App() {
         </header>
 
         <div className="messages">
-          {messages.map((message) => (
-            <article
-              className={`message-row ${message.role}`}
-              key={message.id}
-            >
+          {visibleMessages.map((message) => (
+            <article className={`message-row ${message.role}`} key={message.id}>
               {message.role === "bot" && (
-                <div className="avatar">
+                <div className="avatar" aria-hidden="true">
                   <Heart size={18} />
                 </div>
               )}
@@ -153,16 +175,17 @@ function App() {
 
           {isThinking && (
             <article className="message-row bot">
-              <div className="avatar">
-                <Heart size={18} />
+              <div className="avatar" aria-hidden="true">
+                <Sparkles size={18} />
               </div>
               <div className="bubble thinking">
                 <span>{BOT_META}</span>
-                <p>
+                <p>{thinkingLine}</p>
+                <div className="typing-dots" aria-hidden="true">
                   <i />
                   <i />
                   <i />
-                </p>
+                </div>
               </div>
             </article>
           )}
@@ -173,10 +196,9 @@ function App() {
           <input
             aria-label="메시지"
             onChange={(event) => setInput(event.target.value)}
-            placeholder="놀리거나 고민을 말해보세요"
             value={input}
           />
-          <button className="send-button" disabled={!input.trim()} type="submit">
+          <button className="send-button" disabled={!canSend} type="submit">
             <Send size={18} />
             <span>보내기</span>
           </button>
