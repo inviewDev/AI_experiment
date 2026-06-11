@@ -1,0 +1,317 @@
+:root {
+  color-scheme: light;
+  font-family:
+    Inter, Pretendard, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
+    "Noto Sans KR", sans-serif;
+  background: #f7f3eb;
+  color: #1e2228;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  cursor: pointer;
+}
+
+.app-shell {
+  --surface: rgba(255, 252, 246, 0.92);
+  --panel: #fffaf1;
+  --panel-strong: #ffffff;
+  --ink: #22252d;
+  --muted: #707781;
+  --line: rgba(45, 51, 61, 0.12);
+  --accent: #2d8f7a;
+  --accent-strong: #166c61;
+  --accent-soft: #dff4ed;
+  --peach: #f4a68a;
+  --gold: #e4aa39;
+  display: grid;
+  min-height: 100vh;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.86), rgba(247, 243, 235, 0.64)),
+    radial-gradient(circle at 22% 12%, rgba(102, 191, 179, 0.24), transparent 28rem),
+    radial-gradient(circle at 88% 18%, rgba(244, 166, 138, 0.2), transparent 24rem),
+    #f7f3eb;
+  color: var(--ink);
+}
+
+.app-shell.night {
+  --surface: rgba(26, 30, 39, 0.9);
+  --panel: #171b24;
+  --panel-strong: #202633;
+  --ink: #f4f1ea;
+  --muted: #abb3c1;
+  --line: rgba(255, 255, 255, 0.12);
+  --accent: #66bfb3;
+  --accent-strong: #9be5da;
+  --accent-soft: rgba(102, 191, 179, 0.16);
+  --peach: #f19a7c;
+  --gold: #f0c66d;
+  background:
+    linear-gradient(135deg, rgba(14, 17, 23, 0.92), rgba(26, 30, 39, 0.88)),
+    radial-gradient(circle at 20% 14%, rgba(102, 191, 179, 0.18), transparent 28rem),
+    radial-gradient(circle at 86% 8%, rgba(244, 166, 138, 0.14), transparent 24rem),
+    #11151c;
+}
+
+.chat-header p {
+  margin: 0;
+  font-weight: 800;
+}
+
+.chat-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  min-height: 100vh;
+  width: min(1040px, 100%);
+  margin: 0 auto;
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 52%, transparent);
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px clamp(18px, 3vw, 34px);
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.chat-header > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--ink);
+  background: var(--panel-strong);
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 0;
+  padding: 28px clamp(18px, 4vw, 52px);
+  overflow: auto;
+}
+
+.message-row {
+  display: flex;
+  gap: 10px;
+  max-width: min(720px, 100%);
+}
+
+.message-row.user {
+  align-self: flex-end;
+  justify-content: flex-end;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border-radius: 14px;
+  color: #143c36;
+  background: linear-gradient(135deg, #9be5da, #f7cf7b);
+}
+
+.bubble {
+  min-width: 0;
+  max-width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--panel-strong);
+  box-shadow: 0 18px 42px rgba(25, 30, 38, 0.07);
+}
+
+.message-row.user .bubble {
+  color: #07352f;
+  border-color: rgba(45, 143, 122, 0.28);
+  background: linear-gradient(135deg, #aee8dd, #f5d183);
+}
+
+.bubble span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 0.73rem;
+  font-weight: 800;
+}
+
+.message-row.user .bubble span {
+  color: rgba(7, 53, 47, 0.62);
+}
+
+.bubble p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.62;
+}
+
+.bubble p + p {
+  margin-top: 10px;
+}
+
+.thinking p {
+  display: flex;
+  gap: 5px;
+  min-width: 54px;
+  min-height: 20px;
+  align-items: center;
+}
+
+.thinking i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 900ms ease-in-out infinite;
+}
+
+.thinking i:nth-child(2) {
+  animation-delay: 120ms;
+}
+
+.thinking i:nth-child(3) {
+  animation-delay: 240ms;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+}
+
+.composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 0 clamp(18px, 4vw, 52px) 16px;
+}
+
+.composer input {
+  width: 100%;
+  height: 52px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  color: var(--ink);
+  background: var(--panel-strong);
+  outline: none;
+}
+
+.composer input:focus {
+  border-color: color-mix(in srgb, var(--accent) 65%, var(--line));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.send-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 96px;
+  height: 52px;
+  padding: 0 17px;
+  border-radius: 16px;
+  color: white;
+  background: var(--accent-strong);
+  font-weight: 800;
+}
+
+.send-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+footer {
+  padding: 0 clamp(18px, 4vw, 52px) 20px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .chat-panel {
+    border-left: 0;
+    border-right: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .chat-header {
+    padding: 16px;
+  }
+
+  .messages {
+    padding: 20px 14px;
+  }
+
+  .composer {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0 14px 14px;
+  }
+
+  .composer .send-button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  footer {
+    padding: 0 14px 16px;
+  }
+}
